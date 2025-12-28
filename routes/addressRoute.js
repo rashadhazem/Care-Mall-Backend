@@ -38,15 +38,28 @@ router.use(authService.protect, authService.allowedTo('user'));
  *           schema:
  *             type: object
  *             required:
- *               - title
+ *               - alias
  *               - details
+ *               - phone
+ *               - city
+ *               - postalCode
+ *               
  *             properties:
- *               title:
+ *               alias:
  *                 type: string
  *                 example: Home
+ *               phone:
+ *                 type: string
+ *                 example: +1234567890
+ *               city:
+ *                 type: string
+ *                 example: CityName
  *               details:
  *                 type: string
  *                 example: 123 Street, City, Country
+ *               postalCode:
+ *                 type: string
+ *                 example: 12345
  *     responses:
  *       201:
  *         description: Address added successfully

@@ -13,13 +13,42 @@ const options = {
         url: "http://localhost:8000/api/v1",
       },
     ],
-   components: {
+    components: {
       securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
         },
+      },
+      schemas: {
+        Store: {
+          type: "object",
+          required: ["name", "description"],
+          properties: {
+            name: {
+              type: "string",
+              description: "Store name",
+            },
+            description: {
+              type: "string",
+              description: "Store description",
+            },
+            image: {
+              type: "string",
+              description: "Image URL"
+            }
+          },
+        },
+        Chat: {
+          type: "object",
+          properties: {
+            participants: {
+              type: "array",
+              items: { type: "string" }
+            },
+          }
+        }
       },
     },
   },

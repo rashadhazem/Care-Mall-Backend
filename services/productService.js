@@ -1,7 +1,9 @@
 const asyncHandler = require('express-async-handler');
 const cloudinary = require('../utils/cloudinary');
 const factory = require('./handlersFactory');
+
 const Product = require('../models/productModel');
+const Store = require('../models/storeModel');
 
 exports.uploadProductImages = require('../middlewares/uploadImageMiddleware').uploadMultipleImages([
   { name: 'imageCover', maxCount: 1 },
@@ -61,7 +63,14 @@ exports.getProduct = factory.getOne(Product, 'reviews');
 // @desc    Create product
 // @route   POST  /api/v1/products
 // @access  Private
-exports.createProduct = asyncHandler(async (req, res) => {
+exports.createProduct = asyncHandler(async (req, res, next) => { // Added next for error handling
+  if (req.user.role === 'vendor') {
+    const store = await Store.findOne({ owner: req.user._id });
+    if (!store) {
+      return next(new ApiError('You do not have a store created yet', 404));
+    }
+    req.body.store = store._id;
+  }
   const product = await Product.create(req.body);
   res.status(201).json({ status: 'success', product });
 });
@@ -103,6 +112,6 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
     }
   }
 
-  await product.remove();
+  await product.deleteOne();
   res.status(204).json({ status: 'success', message: 'Product deleted' });
 });

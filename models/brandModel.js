@@ -17,6 +17,11 @@ const brandSchema = new mongoose.Schema(
       public_id: String,
       url: String,
     },
+    store: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Store',
+      required: [true, 'Brand must belong to a store'],
+    },
   },
   { timestamps: true }
 );

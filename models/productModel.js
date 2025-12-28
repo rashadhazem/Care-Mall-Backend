@@ -40,8 +40,8 @@ const productSchema = new mongoose.Schema(
 
     imageCover: {
       public_id: String,
-       url: String,
-     
+      url: String,
+
     },
     images: [{ public_id: String, url: String }],
     category: {
@@ -58,6 +58,11 @@ const productSchema = new mongoose.Schema(
     brand: {
       type: mongoose.Schema.ObjectId,
       ref: 'Brand',
+    },
+    store: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Store',
+      required: [true, 'Product must belong to a store'],
     },
     ratingsAverage: {
       type: Number,

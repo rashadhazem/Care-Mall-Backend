@@ -16,15 +16,18 @@ const {generateOTP}=require('../utils/GenerateOtp');
 // @access  Public
 exports.signup = asyncHandler(async (req, res, next) => {
  try{
-    const { name, email, password ,isAdmin} = req.body;
+    const { name, email, password ,role} = req.body;
 
     const existingUser=await User.findOne({email})
      if(existingUser){
             return res.status(400).json({"message":"User already exists"})
         }
-         
-
+        
       const createdUser=new User(req.body)
+       if(role==='admin'){
+        createdUser.role='admin'
+        createdUser.isAdmin = true;
+       }
         await createdUser.save()
 
         const otp=generateOTP();
@@ -42,13 +45,10 @@ exports.signup = asyncHandler(async (req, res, next) => {
           `OTP Verification for Your Ecommerce Account`
           ,`Your One-Time Password (OTP) for account verification is: <b>${otp}</b>.</br>Do not share this OTP with anyone for security reasons`)
 
-
         // creating new user
-        
          
         res.status(201).json({
            message: 'User registered. Please verify your email.' });
-
  }
  catch(error){
   console.log(error);
@@ -65,7 +65,7 @@ exports.login = asyncHandler(async (req, res, next) => {
         const existingUser=await User.findOne({email:req.body.email})
          
         const passCorrect = existingUser ? await bcrypt.compare(req.body.password, existingUser.password) : false;
-         console.log("pass correct",)
+         console.log("pass correct",passCorrect)
         if(existingUser && passCorrect ){
            
            if(!existingUser.isVerified){
@@ -171,12 +171,25 @@ exports.resendOtp=asyncHandler(async (req,res,next)=>{
 exports.protect = asyncHandler(async (req, res, next) => {
   // 1) Check if token exist, if exist get
   let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
+  const authHeader = req.headers.authorization;
+  // 1) Check header
+  if (!authHeader) {
+    return next(
+      new ApiError(
+        'You are not logged in, please login to get access this route',
+        401
+      )
+    );
   }
+  if (!authHeader.toLowerCase().startsWith('bearer ')) {
+    return next(
+      new ApiError(
+        'Invalid authorization format, expected Bearer token',
+        401
+      )
+    );
+  }
+  token = authHeader.split(' ')[1];
   if (!token) {
     return next(
       new ApiError(
@@ -185,12 +198,12 @@ exports.protect = asyncHandler(async (req, res, next) => {
       )
     );
   }
-
+  console.log("req body is :",req.body);
   // 2) Verify token (no change happens, expired token)
-  const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-
+  const decoded = jwt.verify(token, process.env.SECRET_KEY);
+  console.log("DECODED TOKEN:", decoded);
   // 3) Check if user exists
-  const currentUser = await User.findById(decoded.userId);
+  const currentUser = await User.findById(decoded._id);
   if (!currentUser) {
     return next(
       new ApiError(

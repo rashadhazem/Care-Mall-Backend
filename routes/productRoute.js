@@ -92,7 +92,7 @@ router.route('/').get(getProducts);
  */
 router.route('/').post(
   authService.protect,
-  authService.allowedTo('admin', 'manager'),
+  authService.allowedTo('admin', 'vendor'),
   uploadProductImages,
   uploadToCloudinary,
   createProductValidator,
@@ -168,7 +168,7 @@ router
   .route('/:id')
   .put(
     authService.protect,
-    authService.allowedTo('admin', 'manager'),
+    authService.allowedTo('admin', 'vendor'),
     uploadProductImages,
     uploadToCloudinary,
     updateProductValidator,

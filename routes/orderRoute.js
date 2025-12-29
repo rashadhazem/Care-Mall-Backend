@@ -99,7 +99,7 @@ router.route('/:cartId').post(authService.allowedTo('user'), createCashOrder);
  */
 router.get(
   '/',
-  authService.allowedTo('user', 'admin', 'manager'),
+  authService.allowedTo('user', 'admin', 'vendor'),
   filterOrderForLoggedUser,
   findAllOrders
 );
@@ -152,7 +152,7 @@ router.get('/:id', findSpecificOrder);
  */
 router.put(
   '/:id/pay',
-  authService.allowedTo('admin', 'manager'),
+  authService.allowedTo('admin', 'vendor'),
   updateOrderToPaid
 );
 
@@ -182,7 +182,7 @@ router.put(
  */
 router.put(
   '/:id/deliver',
-  authService.allowedTo('admin', 'manager'),
+  authService.allowedTo('admin', 'vendor'),
   updateOrderToDelivered
 );
 

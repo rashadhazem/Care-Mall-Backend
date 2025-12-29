@@ -5,6 +5,7 @@ const ApiError = require('../utils/apiError');
 const cloudinary = require('../utils/cloudinary');
 const {createToken} = require('../utils/createToken');
 const User = require('../models/userModel');
+const {sanitizeUser}= require('../utils/SanitizeUser');
 
 // Upload single image
 exports.uploadUserImage = require('../middlewares/uploadImageMiddleware').uploadSingleImage('image');
@@ -29,12 +30,12 @@ exports.uploadToCloudinary = asyncHandler(async (req, res, next) => {
 // @desc    Get list of users
 // @route   GET /api/v1/users
 // @access  Private/Admin
-exports.getUsers = factory.getAll(User);
+exports.getUsers = factory.getAll(sanitizeUser(User));
 
 // @desc    Get specific user by id
 // @route   GET /api/v1/users/:id
 // @access  Private/Admin
-exports.getUser = factory.getOne(User);
+exports.getUser = factory.getOne(sanitizeUser(User));
 
 // @desc    Create user
 // @route   POST  /api/v1/users

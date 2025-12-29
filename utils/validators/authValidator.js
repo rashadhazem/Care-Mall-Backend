@@ -26,7 +26,7 @@ exports.signupValidator = [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters'),
   check('role').optional()
-  .isIn(['user', 'admin', 'manager'])
+  .isIn(['user', 'admin', 'vendor'])
   .withMessage('Invalid role'),
   validatorMiddleware,
 ];

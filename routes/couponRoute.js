@@ -20,7 +20,7 @@ const router = express.Router();
  */
 
 // 🔐 كل Routes محمية (Admin / Manager)
-router.use(authService.protect, authService.allowedTo('admin', 'manager'));
+router.use(authService.protect, authService.allowedTo('admin', 'vendor'));
 
 // =========================
 // /coupons

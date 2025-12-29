@@ -73,7 +73,7 @@ router.route('/').get(getBrands);
  */
 router.route('/').post(
   authService.protect,
-  authService.allowedTo('admin', 'manager'),
+  authService.allowedTo('admin', 'vendor'),
   uploadBrandImage,
   uploadToCloudinary,
   createBrandValidator,
@@ -136,7 +136,7 @@ router.route('/:id').get(getBrandValidator,getBrand);
  */
 router.route('/:id').put(
   authService.protect,
-  authService.allowedTo('admin', 'manager'),
+  authService.allowedTo('admin', 'vendor'),
   uploadBrandImage,
   uploadToCloudinary,
   updateBrandValidator,

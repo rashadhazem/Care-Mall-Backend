@@ -180,7 +180,7 @@ router
   .route('/:id')
   .delete(
     authService.protect,
-    authService.allowedTo('user', 'manager', 'admin'),
+    authService.allowedTo('user', 'vendor', 'admin'),
     deleteReviewValidator,
     deleteReview
   );

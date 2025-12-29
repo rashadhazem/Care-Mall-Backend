@@ -2,6 +2,38 @@ const asyncHandler = require('express-async-handler');
 const slugify = require('slugify'); // Requires installing/verifying slugify, assuming it's present in package.json
 const factory = require('./handlersFactory');
 const Store = require('../models/storeModel');
+const cloudinary = require('../utils/cloudinary');
+const ApiError = require('../utils/apiError');
+
+exports.uploadStoreImage = require('../middlewares/uploadImageMiddleware').uploadSingleImage('image');
+
+exports.uploadToCloudinary = asyncHandler(async (req, res, next) => {
+  console.log('Upload to cloudinary called', req.file);
+
+  if (!req.file) return next();
+
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'stores',
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    stream.end(req.file.buffer);
+  });
+
+  req.body.image = {
+    public_id: result.public_id,
+    url: result.secure_url,
+  };
+
+  next();
+});
+
 
 // @desc    Get list of stores
 // @route   GET /api/v1/stores
@@ -18,7 +50,8 @@ exports.getStore = factory.getOne(Store);
 // @access  Private/Vendor/Admin
 exports.createStore = asyncHandler(async (req, res) => {
     // 1. Check if user already has a store (optional logic depending on requirements)
-    req.body.owner = req.user._id;
+   console.log("store",req.body)
+   
     if (req.body.name) {
         req.body.slug = slugify(req.body.name);
     }
@@ -30,6 +63,10 @@ exports.createStore = asyncHandler(async (req, res) => {
 // @route   PUT /api/v1/stores/:id
 // @access  Private/Vendor/Admin
 exports.updateStore = asyncHandler(async (req, res, next) => {
+    if(req.body.image && req.store.image?.public_id){
+        await cloudinary.uploader.destroy(req.store.image.public_id);
+    }
+    Store.image = req.body.image || Store.image;
     // Add logic to ensure only owner or admin can update
     const store = await Store.findById(req.params.id);
     if (!store) {

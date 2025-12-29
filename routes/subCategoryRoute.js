@@ -68,7 +68,7 @@ router
   .route('/')
   .post(
     authService.protect,
-    authService.allowedTo('admin', 'manager'),
+    authService.allowedTo('admin', 'vendor'),
     setCategoryIdToBody,
     createSubCategoryValidator,
     createSubCategory
@@ -148,7 +148,7 @@ router
   .route('/:id')
   .put(
     authService.protect,
-    authService.allowedTo('admin', 'manager'),
+    authService.allowedTo('admin', 'vendor'),
     updateSubCategoryValidator,
     updateSubCategory
   );

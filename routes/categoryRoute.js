@@ -73,7 +73,7 @@ router.route('/').get(getCategories);
  */
 router.route('/').post(
   authService.protect,
-  authService.allowedTo('admin', 'manager'),
+  authService.allowedTo('admin', 'vendor'),
   uploadCategoryImage,
   uploadToCloudinary,
   createCategoryValidator,
@@ -135,7 +135,7 @@ router.route('/:id').get(getCategoryValidator, getCategory);
  */
 router.route('/:id').put(
   authService.protect,
-  authService.allowedTo('admin', 'manager'),
+  authService.allowedTo('admin', 'vendor'),
   uploadCategoryImage,
   uploadToCloudinary,
   updateCategoryValidator,

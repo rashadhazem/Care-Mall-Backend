@@ -6,7 +6,7 @@ const options = {
     info: {
       title: "E-commerce API",
       version: "1.0.0",
-      description: "API documentation using Swagger for the E-commerce project",
+      description: "API documentation using Swagger for the CARE-MALL E-commerce project",
     },
     servers: [
       {

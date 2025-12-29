@@ -16,7 +16,7 @@ const {
   updateUser,
   deleteUser,
   uploadUserImage,
-  resizeImage,
+  
   changeUserPassword,
   getLoggedUserData,
   updateLoggedUserPassword,
@@ -131,7 +131,7 @@ router.delete('/deleteMe', deleteLoggedUserData);
 // =========================
 // Admin & Manager
 // =========================
-router.use(authService.allowedTo('admin', 'manager'));
+router.use(authService.allowedTo('admin', 'vender'));
 
 /**
  * @swagger

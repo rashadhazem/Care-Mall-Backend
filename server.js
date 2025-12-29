@@ -4,24 +4,29 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require('cors');
 const cookieParser = require("cookie-parser")
-const swaggerUI = require("swagger-ui-express");
-const swaggerSpec = require("./swagger");
-dotenv.config({ path: 'config.env' });
-const mountRoutes = require("./routes/index");
 
+const swaggerUI = require("swagger-ui-express");
+
+
+const swaggerSpec = require("./swagger");
+
+
+dotenv.config({ path: 'config.env' });
+
+const mountRoutes = require("./routes/index");
 
 
 const app = express();
 app.use(cors({
     origin: process.env.ORIGIN,
     credentials: true,
-    exposedHeaders: ['X-Total-Count'],
     methods: ['GET', 'POST', 'PATCH', 'DELETE']
 }));
 app.use(express.json());
 app.use(cookieParser());
 
 mountRoutes(app);
+
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 

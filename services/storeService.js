@@ -62,9 +62,11 @@ exports.createStore = asyncHandler(async (req, res) => {
 // @desc    Update specific store
 // @route   PUT /api/v1/stores/:id
 // @access  Private/Vendor/Admin
+
 exports.updateStore = asyncHandler(async (req, res, next) => {
-    if(req.body.image && req.store.image?.public_id){
-        await cloudinary.uploader.destroy(req.store.image.public_id);
+  console.log("Updating store:", req.body);
+    if(req.body.image.public_id){
+        await cloudinary.uploader.destroy(req.body.image.public_id);
     }
     Store.image = req.body.image || Store.image;
     // Add logic to ensure only owner or admin can update

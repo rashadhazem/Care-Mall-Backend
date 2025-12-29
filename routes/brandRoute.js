@@ -61,12 +61,17 @@ router.route('/').get(getBrands);
  *             required:
  *               - name
  *               - image
+ *               - store
  *             properties:
  *               name:
+ *                 type: string
+ *               store:
  *                 type: string
  *               image:
  *                 type: string
  *                 format: binary
+ *        
+ * 
  *     responses:
  *       201:
  *         description: Brand created successfully

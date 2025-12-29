@@ -153,6 +153,8 @@ router
   .put(
     authService.protect,
     authService.allowedTo('admin', 'vendor'),
+    uploadStoreImage,
+    uploadToCloudinary,
     updateStoreValidator,
     updateStore
   );

@@ -33,9 +33,6 @@ exports.updateStoreValidator = [
     .isLength({ max: 500 })
     .withMessage('Store description must be less than 500 characters'),
   
-  body('owner')
-    .notEmpty()
-    .withMessage('Store owner is required'),
   validatorMiddleware,
 ];
 exports.deleteStoreValidator = [

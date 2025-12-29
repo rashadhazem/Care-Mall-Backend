@@ -30,12 +30,12 @@ exports.uploadToCloudinary = asyncHandler(async (req, res, next) => {
 // @desc    Get list of users
 // @route   GET /api/v1/users
 // @access  Private/Admin
-exports.getUsers = factory.getAll(sanitizeUser(User));
+exports.getUsers = factory.getAll(User);
 
 // @desc    Get specific user by id
 // @route   GET /api/v1/users/:id
 // @access  Private/Admin
-exports.getUser = factory.getOne(sanitizeUser(User));
+exports.getUser = factory.getOne(User);
 
 // @desc    Create user
 // @route   POST  /api/v1/users

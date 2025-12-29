@@ -2,7 +2,7 @@ const multer = require('multer');
 const ApiError = require('../utils/apiError');
 
 const multerOptions = () => {
-   console.log("from multer");
+  
   const multerStorage = multer.memoryStorage();
 
   const multerFilter = function (req, file, cb) {

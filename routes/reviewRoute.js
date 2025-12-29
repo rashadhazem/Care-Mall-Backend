@@ -72,10 +72,10 @@ router.route('/').get(createFilterObj, getReviews);
  *           schema:
  *             type: object
  *             required:
- *               - rating
+ *               - ratings
  *               - title
  *             properties:
- *               rating:
+ *               ratings:
  *                 type: number
  *                 example: 4
  *               title:
@@ -141,7 +141,7 @@ router
  *           schema:
  *             type: object
  *             properties:
- *               rating:
+ *               ratings:
  *                 type: number
  *               title:
  *                 type: string

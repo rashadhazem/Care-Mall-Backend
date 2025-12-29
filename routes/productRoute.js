@@ -68,6 +68,8 @@ router.route('/').get(getProducts);
  *               - title
  *               - price
  *               - category
+ *               - imageCover
+ *               - store
  *             properties:
  *               title:
  *                 type: string
@@ -79,6 +81,11 @@ router.route('/').get(getProducts);
  *                 type: number
  *               category:
  *                 type: string
+ *               store:
+ *                 type: string
+ *               imageCover:
+ *                 type: string
+ *                 format: binary
  *               images:
  *                 type: array
  *                 items:
@@ -155,6 +162,11 @@ router
  *                 type: number
  *               category:
  *                 type: string
+ *               store:
+ *                 type: string
+ *               imageCover:
+ *                 type: string
+ *                 format: binary
  *               images:
  *                 type: array
  *                 items:

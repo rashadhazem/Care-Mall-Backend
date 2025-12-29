@@ -1,6 +1,6 @@
 const cloudinary = require('../utils/cloudinary')
 const asyncHandler = require('express-async-handler');
-
+const slugify = require('slugify');
 const factory = require('./handlersFactory');
 const Category = require('../models/categoryModel');
 
@@ -57,6 +57,7 @@ exports.updateCategory = asyncHandler(async (req, res) => {
 
   category.name = req.body.name || category.name;
   category.image = req.body.image || category.image;
+  category.slug = req.body.name ? slugify(req.body.name) : category.slug;
   await category.save();
   res.status(200).json({ status: 'success', category });
 });
@@ -71,6 +72,6 @@ exports.deleteCategory = asyncHandler(async (req, res) => {
 
   if (category.image?.public_id) await cloudinary.uploader.destroy(category.image.public_id);
 
-  await category.remove();
+  await category.deleteOne();
   res.status(204).json({ status: 'success', message: 'Category deleted' });
 });

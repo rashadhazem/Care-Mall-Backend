@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const cloudinary = require('../utils/cloudinary')
 const factory = require('./handlersFactory');
+const slugify = require('slugify');
 
 const Brand = require('../models/brandModel');
 const Store = require('../models/storeModel');
@@ -55,6 +56,7 @@ exports.updateBrand = asyncHandler(async (req, res) => {
 
   brand.name = req.body.name || brand.name;
   brand.image = req.body.image || brand.image;
+  brand.slug = req.body.name ? slugify(req.body.name) : brand.slug;
 
   await brand.save();
   res.status(200).json({ status: 'success', brand });

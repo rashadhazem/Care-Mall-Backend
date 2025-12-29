@@ -91,8 +91,17 @@ exports.updateProduct = asyncHandler(async (req, res) => {
       await cloudinary.uploader.destroy(img.public_id);
     }
   }
+  req.body.imageCover = req.body.imageCover || product.imageCover;
+  req.body.images = req.body.images || product.images;
+  req.body.store = req.body.store || product.store;
+  req.body.category = req.body.category || product.category;
+  req.body.description = req.body.description || product.description;
+  req.body.title = req.body.title || product.title;
+  req.body.price = req.body.price || product.price;
+  req.body.quantity = req.body.quantity || product.quantity;
 
   Object.assign(product, req.body);
+
   await product.save();
 
   res.status(200).json({ status: 'success', product });

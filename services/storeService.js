@@ -65,28 +65,34 @@ exports.createStore = asyncHandler(async (req, res) => {
 
 exports.updateStore = asyncHandler(async (req, res, next) => {
   console.log("Updating store:", req.body);
-    if(req.body.image.public_id){
-        await cloudinary.uploader.destroy(req.body.image.public_id);
-    }
-    Store.image = req.body.image || Store.image;
-    // Add logic to ensure only owner or admin can update
-    const store = await Store.findById(req.params.id);
-    if (!store) {
-        return next(new ApiError(`No store for this id ${req.params.id}`, 404));
-    }
-    // Check ownership
-    if (req.user.role === 'vendor' && store.owner.toString() !== req.user._id.toString()) {
+  const store = await Store.findById(req.params.id);
+
+  if (!store) {
+    return next(new ApiError(`No store for this id ${req.params.id}`, 404));
+  }
+  if (req.user.role === 'vendor' && store.owner.toString() !== req.user._id.toString()) {
         return next(new ApiError(`You are not allowed to update this store`, 403));
     }
-
+    if(req.file && store.image?.public_id){
+        await cloudinary.uploader.destroy(store.image.public_id);
+    }
+    
+ if(req.body.image){
+    store.image = req.body.image;
+ }
+    // Check ownership
     if (req.body.name) {
         req.body.slug = slugify(req.body.name);
+        store.name = req.body.name;
+    }
+    if (req.body.description) {
+        store.description = req.body.description;
+    }
+    if (req.body.owner) {
+        store.owner = req.body.owner;
     }
 
-    const updatedStore = await Store.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true,
-    });
+   const updatedStore = await store.save();
 
     res.status(200).json({ data: updatedStore });
 });

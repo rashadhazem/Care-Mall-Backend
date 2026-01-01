@@ -3,5 +3,9 @@ exports.sanitizeUser=(user)=>{
         _id:user._id,
         email:user.email,
         isVerified:user.isVerified,
-        isAdmin:user.isAdmin}
+        isAdmin:user.isAdmin,
+        role:user.role,
+        name:user.name
+    
+    }
 }

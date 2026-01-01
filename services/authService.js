@@ -142,8 +142,8 @@ exports.verifyOtp = asyncHandler(async (req,res,next)=>{
 });
 
 exports.resendOtp=asyncHandler(async (req,res,next)=>{
-    try {
-
+    try { 
+      
         const existingUser=await User.findOne({email:req.body.email})
 
         if(!existingUser){
@@ -159,7 +159,7 @@ exports.resendOtp=asyncHandler(async (req,res,next)=>{
         await newOtp.save()
 
         await sendMail(existingUser.email,`OTP Verification for Your E-commerce App Account`,`Your One-Time Password (OTP) for account verification is: <b>${otp}</b>.</br>Do not share this OTP with anyone for security reasons`)
-
+  
         res.status(201).json({'message':"OTP sent"})
     } catch (error) {
         res.status(500).json({'message':"Some error occured while resending otp, please try again later"})

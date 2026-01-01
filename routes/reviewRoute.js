@@ -151,7 +151,7 @@ router
  */
 router
   .route('/:id')
-  .put(
+  .put( 
     authService.protect,
     authService.allowedTo('user'),
     updateReviewValidator,

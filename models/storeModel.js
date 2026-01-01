@@ -34,7 +34,14 @@ const storeSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+storeSchema.pre(/^find/, function (next) {
+ this.populate({
+    path:'owner',
+    select:'name email'
+ })
+next();
 
+})
 const Store = mongoose.model('Store', storeSchema);
 
 module.exports = Store;

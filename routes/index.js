@@ -12,6 +12,7 @@ const cartRoute = require('./cartRoute');
 const orderRoute = require('./orderRoute');
 const storeRoute = require('./storeRoute');
 const chatRoute = require('./chatRoute');
+const statsRoute = require('./statsRoute');
 
 const mountRoutes = (app) => {
   app.use('/api/v1/categories', categoryRoute);
@@ -28,6 +29,7 @@ const mountRoutes = (app) => {
   app.use('/api/v1/orders', orderRoute);
   app.use('/api/v1/stores', storeRoute);
   app.use('/api/v1/chats', chatRoute);
+  app.use('/api/v1/stats', statsRoute);
 };
 
 module.exports = mountRoutes;

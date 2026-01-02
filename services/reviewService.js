@@ -6,7 +6,7 @@ const Review = require('../models/reviewModel');
 exports.createFilterObj = (req, res, next) => {
   let filterObject = {};
   if (req.params.productId) filterObject = { product: req.params.productId };
-  req.filterObj = filterObject;
+  req.filterObj = filterObject; 
   next();
 };
 

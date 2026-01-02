@@ -13,26 +13,57 @@ exports.accessChat = asyncHandler(async (req, res, next) => {
         return next(new ApiError('UserId or StoreId param not sent with request', 400));
     }
 
-    // TODO: Refine logic to handle 1-on-1 chats correctly based on participants or Store-User relation
-    // For simplicity, assuming a User starts a chat with a Store Owner (indirectly via StoreId) or another User
+    let chatData = {};
+    let query = {};
 
-    let chatData = {
-        participants: [req.user._id, userId],
-    }
     if (storeId) {
+        // Find the store to get the owner
+        const Store = require('../models/storeModel');
+        const store = await Store.findById(storeId);
+
+        if (!store) {
+            return next(new ApiError('Store not found', 404));
+        }
+
+        // Check if chat exists betwen current user and this store
+        query = {
+            store: storeId,
+            participants: { $all: [req.user._id, store.owner] }
+        };
+
         chatData = {
-            participants: [req.user._id],
+            participants: [req.user._id, store.owner],
             store: storeId
+        };
+    } else {
+        // User to User chat
+        query = {
+            participants: { $all: [req.user._id, userId], $size: 2 },
+            store: { $exists: false }
+        };
+
+        chatData = {
+            participants: [req.user._id, userId],
+        };
+    }
+
+    let isChat = await Chat.findOne(query)
+        .populate("participants", "-password")
+        .populate("store");
+
+    if (isChat) {
+        res.send(isChat);
+    } else {
+        try {
+            const createdChat = await Chat.create(chatData);
+            const fullChat = await Chat.findOne({ _id: createdChat._id })
+                .populate("participants", "-password")
+                .populate("store");
+            res.status(200).json(fullChat);
+        } catch (error) {
+            return next(new ApiError(error.message, 400));
         }
     }
-
-    // Check if chat exists (Logic can be complex depending on exact requirements, simplifying for now)
-    // For now, always create a new chat or find existing one
-
-    // Basic implementation: Create new chat
-    const newChat = await Chat.create(chatData);
-    const fullChat = await Chat.findOne({ _id: newChat._id }).populate("participants", "-password");
-    res.status(200).json(fullChat);
 });
 
 // @desc    Fetch all chats for a user

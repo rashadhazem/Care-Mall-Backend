@@ -62,6 +62,8 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
       email: req.body.email,
       image: req.body.image,
       role: req.body.role,
+      active: req.body.active,
+      isVerified: req.body.isVerified
     },
     {
       new: true,
@@ -101,7 +103,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
 
   if (user.image?.public_id) await cloudinary.uploader.destroy(user.image.public_id);
 
-  await user.remove();
+  await user.deleteOne();
   res.status(204).json({ status: 'success', message: 'User deleted' });
 });
 

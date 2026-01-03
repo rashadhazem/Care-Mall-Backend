@@ -28,6 +28,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
         createdUser.role='admin'
         createdUser.isAdmin = true;
        }
+       createdUser.isVerified=false;
         await createdUser.save()
 
         const otp=generateOTP();
@@ -73,10 +74,10 @@ exports.login = asyncHandler(async (req, res, next) => {
            }
             // getting secure user info
             const secureInfo=sanitizeUser(existingUser)
-             console.log("here am")
+             
             // generating jwt token
             const token=createToken(secureInfo)
-            console.log("here")
+           
             // sending jwt token in the response cookies
             res.cookie('token',token,{
                 sameSite:process.env.PRODUCTION==='true'?"None":'Lax',

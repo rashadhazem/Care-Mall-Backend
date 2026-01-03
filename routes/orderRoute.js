@@ -97,10 +97,12 @@ router.route('/:cartId').post(authService.allowedTo('user'), createCashOrder);
  *       401:
  *         description: Unauthorized
  */
+const { filterData } = require('../services/filterService');
+
 router.get(
   '/',
   authService.allowedTo('user', 'admin', 'vendor'),
-  filterOrderForLoggedUser,
+  filterData,
   findAllOrders
 );
 

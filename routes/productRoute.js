@@ -48,7 +48,9 @@ router.use('/:productId/reviews', reviewsRoute);
  *       200:
  *         description: List of products
  */
-router.route('/').get(getProducts);
+const { filterData } = require('../services/filterService');
+
+router.route('/').get(authService.protect, filterData, getProducts);
 
 /**
  * @swagger

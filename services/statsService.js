@@ -13,6 +13,7 @@ exports.getAdminStats = asyncHandler(async (req, res, next) => {
     const orders = await Order.countDocuments();
     const products = await Product.countDocuments();
     const stores = await Store.countDocuments();
+    const vendors = await User.countDocuments({ role: 'vendor' });
 
     // Calculate total sales/revenue (simple sum of totalOrderPrice)
     const salesData = await Order.aggregate([
@@ -31,6 +32,7 @@ exports.getAdminStats = asyncHandler(async (req, res, next) => {
         products,
         stores,
         totalSales
+        ,vendors
     });
 });
 

@@ -1,7 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const cloudinary = require('../utils/cloudinary');
 const factory = require('./handlersFactory');
-
+const ApiError = require('../utils/apiError');
 const Product = require('../models/productModel');
 const Store = require('../models/storeModel');
 

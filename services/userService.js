@@ -3,9 +3,9 @@ const bcrypt = require('bcryptjs');
 const factory = require('./handlersFactory');
 const ApiError = require('../utils/apiError');
 const cloudinary = require('../utils/cloudinary');
-const {createToken} = require('../utils/createToken');
+const { createToken } = require('../utils/createToken');
 const User = require('../models/userModel');
-const {sanitizeUser}= require('../utils/SanitizeUser');
+const { sanitizeUser } = require('../utils/SanitizeUser');
 
 // Upload single image
 exports.uploadUserImage = require('../middlewares/uploadImageMiddleware').uploadSingleImage('image');
@@ -49,7 +49,7 @@ exports.createUser = asyncHandler(async (req, res) => {
 // @route   PUT /api/v1/users/:id
 // @access  Private/Admin
 exports.updateUser = asyncHandler(async (req, res, next) => {
-  if(req.body.image && req.user.image?.public_id){
+  if (req.body.image && req.user.image?.public_id) {
     await cloudinary.uploader.destroy(req.user.image.public_id);
   }
   User.image = req.body.image || User.image;
@@ -133,7 +133,7 @@ exports.updateLoggedUserPassword = asyncHandler(async (req, res, next) => {
   );
 
   // 2) Generate token
-  const token = createToken(user._id);
+  const token = createToken(sanitizeUser(user));
 
   res.status(200).json({ data: user, token });
 });

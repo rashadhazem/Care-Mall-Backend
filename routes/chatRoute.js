@@ -4,6 +4,7 @@ const {
     deployUserChats,
     sendMessage,
     allMessages,
+    markRead,
 } = require('../services/chatService');
 const authService = require('../services/authService');
 
@@ -112,5 +113,32 @@ router.route('/message').post(sendMessage);
  *         description: Error fetching messages
  */
 router.route('/:chatId/messages').get(allMessages);
+
+/**
+ * @swagger
+ * /chats/mark-read:
+ *   post:
+ *     summary: Mark messages in a chat as read by the logged-in user
+ *     tags: [Chats]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - chatId
+ *             properties:
+ *               chatId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Messages marked as read
+ *       400:
+ *         description: Invalid data
+ */
+router.route('/mark-read').post(markRead);
 
 module.exports = router;

@@ -29,13 +29,16 @@ exports.accessChat = asyncHandler(async (req, res, next) => {
         }
 
         // Check if chat exists between current user and this store owner
+        // Store owner is populated in the store object, so we need to extract the _id
+        const ownerId = store.owner._id || store.owner;
+
         query = {
             store: storeId,
-            participants: { $all: [req.user._id, store.owner] }
+            participants: { $all: [req.user._id, ownerId] }
         };
 
         chatData = {
-            participants: [req.user._id, store.owner],
+            participants: [req.user._id, ownerId],
             store: storeId
         };
     } else {

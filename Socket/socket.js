@@ -55,7 +55,8 @@ module.exports = function initSocketIO(io) {
                 if (!store) return cb && cb({ status: 'error', message: 'Store not found' });
 
                 const userId = socket.user._id;
-                const ownerId = store.owner._id;
+                // FIX: Verify owner extraction - store.owner is populated object
+                const ownerId = store.owner._id || store.owner;
 
                 let chat = await Chat.findOne({ store: store._id, participants: { $all: [userId, ownerId] } })
                     .populate('participants', 'name email')
@@ -136,10 +137,9 @@ module.exports = function initSocketIO(io) {
                 });
 
                 // Store owner might be populated object or ID depending on query
-                // storeDoc.owner is ObjectId definition in model, but if pre-hook populates it (it does in StoreModel), it's an object.
                 let storeOwnerId = null;
                 if (storeDoc && storeDoc.owner) {
-                    storeOwnerId = storeDoc.owner._id ? storeDoc.owner._id.toString() : storeDoc.owner.toString();
+                    storeOwnerId = (storeDoc.owner._id || storeDoc.owner).toString();
                 }
 
                 const isOwner = storeOwnerId === userIdStr;
@@ -147,7 +147,8 @@ module.exports = function initSocketIO(io) {
                 console.log(`[Socket] Auth Check: User=${userIdStr}, isParticipant=${isParticipant}, isOwner=${isOwner} (StoreOwner=${storeOwnerId})`);
 
                 if (!isParticipant && !isOwner) {
-                    console.log('[Socket] Error: Not authorized');
+                    console.log('[Socket] Error: Not authorized. Details:',
+                        { userId: userIdStr, isParticipant, isOwner, chatParticipants: chat.participants.map(p => (p._id || p).toString()) });
                     return cb && cb({ status: 'error', message: 'Not authorized to send message' });
                 }
 

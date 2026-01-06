@@ -26,4 +26,12 @@ const brandSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+brandSchema.pre(/^find/,function(next){
+this.populate({
+  path:'store',
+  select :'name owner _id'
+})
+next();
+});
+
 module.exports = mongoose.model('Brand', brandSchema);

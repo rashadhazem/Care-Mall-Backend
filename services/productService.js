@@ -67,7 +67,7 @@ exports.createProduct = asyncHandler(async (req, res, next) => { // Added next f
   if (req.user.role === 'vendor') {
     const store = await Store.findOne({ owner: req.user._id });
     if (!store) {
-      return next(new ApiError('You do not have a store created yet', 404));
+      res.status(400).json({ message: 'You should have a store before adding products contact with admin to create one' });
     }
     req.body.store = store._id;
   }

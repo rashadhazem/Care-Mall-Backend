@@ -99,6 +99,10 @@ productSchema.pre(/^find/, function (next) {
     path:'store',
     select:'name _id',
   });
+  this.populate({
+    path:'brand',
+    select:'name _id',
+  });
   next();
 });
 

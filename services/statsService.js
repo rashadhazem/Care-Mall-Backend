@@ -9,7 +9,7 @@ const ApiError = require('../utils/apiError');
 // @route   GET /api/v1/stats/admin
 // @access  Protected/Admin
 exports.getAdminStats = asyncHandler(async (req, res, next) => {
-    const users = await User.countDocuments();
+    const users = await User.countDocuments({ role: 'user' });
     const orders = await Order.countDocuments();
     const products = await Product.countDocuments();
     const stores = await Store.countDocuments();

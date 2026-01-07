@@ -47,7 +47,7 @@ router.use(authService.protect);
  *       401:
  *         description: Unauthorized
  */
-router.get(
+router.post(
   '/checkout-session/:cartId',
   authService.allowedTo('user'),
   checkoutSession

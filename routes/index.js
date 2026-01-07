@@ -30,6 +30,7 @@ const mountRoutes = (app) => {
   app.use('/api/v1/stores', storeRoute);
   app.use('/api/v1/chats', chatRoute);
   app.use('/api/v1/stats', statsRoute);
+  app.use('/api/v1/notifications', require('./notificationRoute'));
 };
 
 module.exports = mountRoutes;

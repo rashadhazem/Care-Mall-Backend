@@ -47,6 +47,40 @@ module.exports = function initSocketIO(io) {
         // join personal room for user-based notifications
         socket.join(socket.user._id.toString());
 
+        // Join role-based rooms
+        if (socket.user.role === 'admin') {
+            socket.join('admin-room');
+            console.log(`[Socket] User ${socket.user._id} joined admin-room`);
+        } else if (socket.user.role === 'vendor') {
+            socket.join('vendor-room');
+            console.log(`[Socket] User ${socket.user._id} joined vendor-room`);
+        }
+
+        // Test Notification Event
+        socket.on('testNotification', ({ type }, cb) => {
+            console.log(`[Socket] testNotification received from ${socket.user.name} for type: ${type}`);
+
+            const notificationData = {
+                title: 'Test Notification',
+                message: `This is a test notification for ${type}`,
+                timestamp: new Date(),
+                type: 'info'
+            };
+
+            if (type === 'self') {
+                socket.emit('notification', notificationData);
+            } else if (type === 'admin' && socket.user.role === 'admin') {
+                io.to('admin-room').emit('notification', { ...notificationData, title: 'Admin Alert', message: 'Hello Admins!' });
+            } else if (type === 'vendor' && socket.user.role === 'vendor') {
+                io.to('vendor-room').emit('notification', { ...notificationData, title: 'Vendor Alert', message: 'Hello Vendors!' });
+            } else {
+                // default to self if no specific logic matched
+                socket.emit('notification', notificationData);
+            }
+
+            cb && cb({ status: 'ok', message: 'Notification sent' });
+        });
+
         // Create or get existing chat between current user and a store (store owner)
         socket.on('createChat', async ({ storeId }, cb) => {
             try {
@@ -160,10 +194,38 @@ module.exports = function initSocketIO(io) {
                 // Emit to all sockets joined to this chat room
                 io.to(chat._id.toString()).emit('newMessage', messagePop);
 
-                // also send a notification to the store owner personal room
-                if (storeDoc && storeDoc.owner) {
-                    io.to(storeDoc.owner.toString()).emit('messageNotification', { chatId: chat._id, message: messagePop });
+                // Notify Recipient (Persistence + Realtime)
+                try {
+                    const notificationUtil = require('../utils/notificationUtil');
+                    const recipient = chat.participants.find(p => (p._id || p).toString() !== socket.user._id.toString());
+
+                    if (recipient) {
+                        const recipientId = (recipient._id || recipient).toString();
+                        // Customize message based on sender role
+                        const notifTitle = 'New Message'; // Could be 'New Message from Vendor' etc.
+                        const notifMsg = `New message from ${socket.user.name}`;
+
+                        // Determine link: generic chat page or specific
+                        // If recipient is vendor -> /vendor/chat, if user -> /profile? (or just open chat)
+                        // For now, keeping it simple or I can try to guess role. 
+                        // Actually, notificationUtil doesn't strictly need role, just ID.
+
+                        // We use the util which saves to DB and uses IO to emit
+                        // Pass 'chatId' in metadata so frontend can maybe open it
+                        await notificationUtil.notifyUser(recipientId, notifTitle, notifMsg, 'info', {
+                            type: 'message',
+                            chatId: chat._id,
+                            link: '/chat' // A default, maybe user profile chat or vendor chat
+                        });
+                    }
+                } catch (notifErr) {
+                    console.error('[Socket] Failed to send persistent notification:', notifErr);
                 }
+
+                // (Legacy) also send a notification to the store owner personal room if needed, 
+                // but the above covers it if store owner is a participant. 
+                // If the store owner was NOT a participant (rare), keep legacy? 
+                // In createChat, owner IS added to participants. So above logic covers both directions.
 
                 cb && cb({ status: 'ok', message: messagePop });
             } catch (err) {

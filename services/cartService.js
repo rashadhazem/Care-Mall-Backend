@@ -161,13 +161,41 @@ exports.applyCoupon = asyncHandler(async (req, res, next) => {
   // 2) Get logged user cart to get total cart price
   const cart = await Cart.findOne({ user: req.user._id });
 
-  const totalPrice = cart.totalCartPrice;
+  let totalPrice = cart.totalCartPrice;
+  let discountAmount = 0;
+
+  // Check if coupon is for specific product
+  if (coupon.product) {
+    const isProductInCart = cart.cartItems.some(
+      (item) => item.product.toString() === coupon.product.toString()
+    );
+
+    if (!isProductInCart) {
+      return next(
+        new ApiError(`Coupon is only valid for product: ${coupon.product}`)
+      );
+    }
+
+    // Calculate discount only on the specific product(s)
+    cart.cartItems.forEach((item) => {
+      if (item.product.toString() === coupon.product.toString()) {
+        const itemTotal = item.price * item.quantity;
+        discountAmount += (itemTotal * coupon.discount) / 100;
+      }
+    });
+
+    if (discountAmount === 0) {
+      // Should not happen if isProductInCart is true, unless price is 0
+      return next(new ApiError(`Coupon applied but no discountable amount found`));
+    }
+
+  } else {
+    // Global discount
+    discountAmount = (totalPrice * coupon.discount) / 100;
+  }
 
   // 3) Calculate price after priceAfterDiscount
-  const totalPriceAfterDiscount = (
-    totalPrice -
-    (totalPrice * coupon.discount) / 100
-  ).toFixed(2); // 99.23
+  const totalPriceAfterDiscount = (totalPrice - discountAmount).toFixed(2);
 
   cart.totalPriceAfterDiscount = totalPriceAfterDiscount;
   await cart.save();

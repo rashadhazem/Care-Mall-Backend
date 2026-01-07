@@ -12,6 +12,16 @@ const couponSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Coupon expire time required'],
     },
+    product: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Product',
+      required: false,
+    },
+    store: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Store',
+      required: false,
+    },
     discount: {
       type: Number,
       required: [true, 'Coupon discount value required'],

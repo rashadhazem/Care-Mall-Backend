@@ -9,6 +9,8 @@ const Product = require('../models/productModel');
 const Cart = require('../models/cartModel');
 const Order = require('../models/orderModel');
 
+const notificationUtil = require('../utils/notificationUtil');
+
 // @desc    create cash order
 // @route   POST /api/v1/orders/cartId
 // @access  Protected/User
@@ -17,8 +19,12 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
   const taxPrice = 0;
   const shippingPrice = 0;
 
-  // 1) Get cart depend on cartId
-  const cart = await Cart.findById(req.params.cartId);
+  // 1) Get cart depend on cartId - Populate product store to notify vendors
+  const cart = await Cart.findById(req.params.cartId).populate({
+    path: 'cartItems.product',
+    populate: { path: 'store', select: 'owner name' }
+  });
+
   if (!cart) {
     return next(
       new ApiError(`There is no such cart with id ${req.params.cartId}`, 404)
@@ -45,7 +51,7 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
   if (order) {
     const bulkOption = cart.cartItems.map((item) => ({
       updateOne: {
-        filter: { _id: item.product },
+        filter: { _id: item.product._id }, // item.product is object now due to populate
         update: { $inc: { quantity: -item.quantity, sold: +item.quantity } },
       },
     }));
@@ -53,6 +59,24 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
 
     // 5) Clear cart depend on cartId
     await Cart.findByIdAndDelete(req.params.cartId);
+
+    // 6) Notifications
+    // Notify Admin
+    notificationUtil.notifyAdmin('New Order', `New Order #${order._id} successfully placed`, 'success');
+
+    // Notify Vendors
+    const notifiedVendors = new Set();
+    cart.cartItems.forEach(item => {
+      const store = item.product.store;
+      // Check if store and owner exist (products might be deleted or store closed)
+      if (store && store.owner && !notifiedVendors.has(store.owner._id.toString())) {
+        notificationUtil.notifyVendor(store.owner._id, 'New Order', `You have a new order for ${store.name}`, 'info');
+        notifiedVendors.add(store.owner._id.toString());
+      }
+    });
+
+    // Notify User
+    notificationUtil.notifyUser(order.user, 'Order Placed', `Your order #${order._id} has been placed successfully.`, 'success');
   }
 
   res.status(201).json({ status: 'success', data: order });
@@ -77,7 +101,10 @@ exports.findSpecificOrder = factory.getOne(Order);
 // @route   PUT /api/v1/orders/:id/pay
 // @access  Protected/Admin-Manager
 exports.updateOrderToPaid = asyncHandler(async (req, res, next) => {
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id).populate({
+    path: 'cartItems.product',
+    populate: { path: 'store' }
+  });
   if (!order) {
     return next(
       new ApiError(
@@ -93,6 +120,25 @@ exports.updateOrderToPaid = asyncHandler(async (req, res, next) => {
 
   const updatedOrder = await order.save();
 
+  // Notify User
+  notificationUtil.notifyUser(order.user, 'Order Paid', `Your order #${order._id} has been marked as paid.`, 'success');
+
+  // Notify Vendors
+  const notifiedVendors = new Set();
+  if (order.cartItems) {
+    order.cartItems.forEach(item => {
+      const product = item.product;
+      // Check structure deeply
+      if (product && product.store && product.store.owner) {
+        const ownerId = product.store.owner._id || product.store.owner;
+        if (!notifiedVendors.has(ownerId.toString())) {
+          notificationUtil.notifyVendor(ownerId, 'Order Paid', `Order #${order._id} has been paid.`, 'success');
+          notifiedVendors.add(ownerId.toString());
+        }
+      }
+    });
+  }
+
   res.status(200).json({ status: 'success', data: updatedOrder });
 });
 
@@ -100,7 +146,10 @@ exports.updateOrderToPaid = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/v1/orders/:id/deliver
 // @access  Protected/Admin-Manager
 exports.updateOrderToDelivered = asyncHandler(async (req, res, next) => {
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id).populate({
+    path: 'cartItems.product',
+    populate: { path: 'store' }
+  });
   if (!order) {
     return next(
       new ApiError(
@@ -115,6 +164,24 @@ exports.updateOrderToDelivered = asyncHandler(async (req, res, next) => {
   order.deliveredAt = Date.now();
 
   const updatedOrder = await order.save();
+
+  // Notify User
+  notificationUtil.notifyUser(order.user, 'Order Delivered', `Your order #${order._id} has been delivered. Enjoy!`, 'success');
+
+  // Notify Vendors
+  const notifiedVendors = new Set();
+  if (order.cartItems) {
+    order.cartItems.forEach(item => {
+      const product = item.product;
+      if (product && product.store && product.store.owner) {
+        const ownerId = product.store.owner._id || product.store.owner;
+        if (!notifiedVendors.has(ownerId.toString())) {
+          notificationUtil.notifyVendor(ownerId, 'Order Delivered', `Order #${order._id} has been delivered.`, 'success');
+          notifiedVendors.add(ownerId.toString());
+        }
+      }
+    });
+  }
 
   res.status(200).json({ status: 'success', data: updatedOrder });
 });
@@ -178,7 +245,11 @@ const createCardOrder = async (session) => {
   const shippingAddress = session.metadata;
   const oderPrice = session.amount_total / 100;
 
-  const cart = await Cart.findById(cartId);
+  const cart = await Cart.findById(cartId).populate({
+    path: 'cartItems.product',
+    populate: { path: 'store', select: 'owner name' }
+  });
+
   const user = await User.findOne({ email: session.customer_email });
 
   // 3) Create order with default paymentMethodType card
@@ -196,7 +267,7 @@ const createCardOrder = async (session) => {
   if (order) {
     const bulkOption = cart.cartItems.map((item) => ({
       updateOne: {
-        filter: { _id: item.product },
+        filter: { _id: item.product._id },
         update: { $inc: { quantity: -item.quantity, sold: +item.quantity } },
       },
     }));
@@ -204,6 +275,23 @@ const createCardOrder = async (session) => {
 
     // 5) Clear cart depend on cartId
     await Cart.findByIdAndDelete(cartId);
+
+    // 6) Notifications
+    // Notify Admin
+    notificationUtil.notifyAdmin('New Order', `New Order #${order._id} (Paid via Card)`, 'success');
+
+    // Notify Vendors
+    const notifiedVendors = new Set();
+    cart.cartItems.forEach(item => {
+      const store = item.product.store;
+      if (store && store.owner && !notifiedVendors.has(store.owner._id.toString())) {
+        notificationUtil.notifyVendor(store.owner._id, 'New Order', `You have a new (Paid) order for ${store.name}`, 'info');
+        notifiedVendors.add(store.owner._id.toString());
+      }
+    });
+
+    // Notify User
+    notificationUtil.notifyUser(order.user, 'Order Placed', `Your order #${order._id} has been placed successfully (Paid via Card).`, 'success');
   }
 };
 

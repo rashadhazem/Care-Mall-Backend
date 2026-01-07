@@ -22,10 +22,12 @@ const productSchema = new mongoose.Schema(
     quantity: {
       type: Number,
       required: [true, 'Product quantity is required'],
+      min: [0, 'Quantity must be at least 0'],
     },
     sold: {
       type: Number,
       default: 0,
+      min: [0, 'Sold quantity cannot be negative'],
     },
     price: {
       type: Number,
@@ -96,12 +98,12 @@ productSchema.pre(/^find/, function (next) {
     select: 'name _id',
   });
   this.populate({
-    path:'store',
-    select:'name _id',
+    path: 'store',
+    select: 'name _id',
   });
   this.populate({
-    path:'brand',
-    select:'name _id',
+    path: 'brand',
+    select: 'name _id',
   });
   next();
 });

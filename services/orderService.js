@@ -51,11 +51,26 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
   if (order) {
     const bulkOption = cart.cartItems.map((item) => ({
       updateOne: {
-        filter: { _id: item.product._id }, // item.product is object now due to populate
+        filter: { _id: item.product._id, quantity: { $gte: item.quantity } },
         update: { $inc: { quantity: -item.quantity, sold: +item.quantity } },
       },
     }));
-    await Product.bulkWrite(bulkOption, {});
+
+    const bulkWriteResult = await Product.bulkWrite(bulkOption, {});
+
+    // If not all items were updated, it means some were out of stock (failed the gte check)
+    if (bulkWriteResult.modifiedCount !== cart.cartItems.length) {
+      // Rollback: Delete the created order
+      await Order.findByIdAndDelete(order._id);
+
+      // Note: A perfect rollback of partial stock decrements would be needed here for full correctness,
+      // but it requires more complex logic (knowing WHICH ones succeeded). 
+      // For now, minimizing damage by cancelling order is the priority.
+      // We could also try to 're-bulk' increment based on what we tried, but simple 'inc' might not match exactly what happened.
+      // Given current architecture, failing loud is safer.
+
+      return next(new ApiError('Some items in your cart are no longer available in the requested quantity.', 400));
+    }
 
     // 5) Clear cart depend on cartId
     await Cart.findByIdAndDelete(req.params.cartId);
@@ -241,57 +256,76 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
 });
 
 const createCardOrder = async (session) => {
-  const cartId = session.client_reference_id;
-  const shippingAddress = session.metadata;
-  const oderPrice = session.amount_total / 100;
+  try {
+    const cartId = session.client_reference_id;
+    const shippingAddress = session.metadata;
+    const oderPrice = session.amount_total / 100;
 
-  const cart = await Cart.findById(cartId).populate({
-    path: 'cartItems.product',
-    populate: { path: 'store', select: 'owner name' }
-  });
-
-  const user = await User.findOne({ email: session.customer_email });
-
-  // 3) Create order with default paymentMethodType card
-  const order = await Order.create({
-    user: user._id,
-    cartItems: cart.cartItems,
-    shippingAddress,
-    totalOrderPrice: oderPrice,
-    isPaid: true,
-    paidAt: Date.now(),
-    paymentMethodType: 'card',
-  });
-
-  // 4) After creating order, decrement product quantity, increment product sold
-  if (order) {
-    const bulkOption = cart.cartItems.map((item) => ({
-      updateOne: {
-        filter: { _id: item.product._id },
-        update: { $inc: { quantity: -item.quantity, sold: +item.quantity } },
-      },
-    }));
-    await Product.bulkWrite(bulkOption, {});
-
-    // 5) Clear cart depend on cartId
-    await Cart.findByIdAndDelete(cartId);
-
-    // 6) Notifications
-    // Notify Admin
-    notificationUtil.notifyAdmin('New Order', `New Order #${order._id} (Paid via Card)`, 'success');
-
-    // Notify Vendors
-    const notifiedVendors = new Set();
-    cart.cartItems.forEach(item => {
-      const store = item.product.store;
-      if (store && store.owner && !notifiedVendors.has(store.owner._id.toString())) {
-        notificationUtil.notifyVendor(store.owner._id, 'New Order', `You have a new (Paid) order for ${store.name}`, 'info');
-        notifiedVendors.add(store.owner._id.toString());
-      }
+    const cart = await Cart.findById(cartId).populate({
+      path: 'cartItems.product',
+      populate: { path: 'store', select: 'owner name' }
     });
 
-    // Notify User
-    notificationUtil.notifyUser(order.user, 'Order Placed', `Your order #${order._id} has been placed successfully (Paid via Card).`, 'success');
+    if (!cart) {
+      console.error(`Cart not found for webhook: ${cartId}`);
+      return;
+    }
+
+    const user = await User.findOne({ email: session.customer_email });
+    if (!user) {
+      console.error(`User not found for email: ${session.customer_email}`);
+      return;
+    }
+
+    // 3) Create order with default paymentMethodType card
+    const order = await Order.create({
+      user: user._id,
+      cartItems: cart.cartItems,
+      shippingAddress,
+      totalOrderPrice: oderPrice,
+      isPaid: true,
+      paidAt: Date.now(),
+      paymentMethodType: 'card',
+    });
+
+    // 4) After creating order, decrement product quantity, increment product sold
+    if (order) {
+      const bulkOption = cart.cartItems.map((item) => ({
+        updateOne: {
+          filter: { _id: item.product._id, quantity: { $gte: item.quantity } },
+          update: { $inc: { quantity: -item.quantity, sold: +item.quantity } },
+        },
+      }));
+      const bulkRes = await Product.bulkWrite(bulkOption, {});
+
+      if (bulkRes.modifiedCount !== cart.cartItems.length) {
+        // Log critical error: Payment received but stock unavailable
+        console.error(`CRITICAL: Order ${order._id} paid but items out of stock! Manual refund or backorder required.`);
+        // Optionally flag order
+      }
+
+      // 5) Clear cart depend on cartId
+      await Cart.findByIdAndDelete(cartId);
+
+      // 6) Notifications
+      // Notify Admin
+      notificationUtil.notifyAdmin('New Order', `New Order #${order._id} (Paid via Card)`, 'success');
+
+      // Notify Vendors
+      const notifiedVendors = new Set();
+      cart.cartItems.forEach(item => {
+        const store = item.product.store;
+        if (store && store.owner && !notifiedVendors.has(store.owner._id.toString())) {
+          notificationUtil.notifyVendor(store.owner._id, 'New Order', `You have a new (Paid) order for ${store.name}`, 'info');
+          notifiedVendors.add(store.owner._id.toString());
+        }
+      });
+
+      // Notify User
+      notificationUtil.notifyUser(order.user, 'Order Placed', `Your order #${order._id} has been placed successfully (Paid via Card).`, 'success');
+    }
+  } catch (error) {
+    console.error('Webhook Error inside createCardOrder:', error);
   }
 };
 

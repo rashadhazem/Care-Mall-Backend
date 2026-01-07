@@ -149,13 +149,19 @@ exports.updateCartItemQuantity = asyncHandler(async (req, res, next) => {
 // @access  Private/User
 exports.applyCoupon = asyncHandler(async (req, res, next) => {
   // 1) Get coupon based on coupon name
+  const couponCode = req.body.coupon || req.body.code;
+
+  if (!couponCode) {
+    return next(new ApiError('Coupon code is required', 400));
+  }
+
   const coupon = await Coupon.findOne({
-    name: req.body.coupon,
+    name: couponCode.toUpperCase(),
     expire: { $gt: Date.now() },
   });
 
   if (!coupon) {
-    return next(new ApiError(`Coupon is invalid or expired`));
+    return next(new ApiError(`Coupon is invalid or expired`, 400));
   }
 
   // 2) Get logged user cart to get total cart price
@@ -167,18 +173,18 @@ exports.applyCoupon = asyncHandler(async (req, res, next) => {
   // Check if coupon is for specific product
   if (coupon.product) {
     const isProductInCart = cart.cartItems.some(
-      (item) => item.product.toString() === coupon.product.toString()
+      (item) => item.product._id.toString() === coupon.product.toString()
     );
 
     if (!isProductInCart) {
       return next(
-        new ApiError(`Coupon is only valid for product: ${coupon.product}`)
+        new ApiError(`Coupon is only valid for product: ${coupon.product}`, 400)
       );
     }
 
     // Calculate discount only on the specific product(s)
     cart.cartItems.forEach((item) => {
-      if (item.product.toString() === coupon.product.toString()) {
+      if (item.product._id.toString() === coupon.product.toString()) {
         const itemTotal = item.price * item.quantity;
         discountAmount += (itemTotal * coupon.discount) / 100;
       }
@@ -186,7 +192,7 @@ exports.applyCoupon = asyncHandler(async (req, res, next) => {
 
     if (discountAmount === 0) {
       // Should not happen if isProductInCart is true, unless price is 0
-      return next(new ApiError(`Coupon applied but no discountable amount found`));
+      return next(new ApiError(`Coupon applied but no discountable amount found`, 400));
     }
 
   } else {

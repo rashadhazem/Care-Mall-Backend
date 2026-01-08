@@ -14,6 +14,7 @@
 - Stripe payments
 - Image uploads (Cloudinary)
 - Email notifications (nodemailer)
+- **Real-time Chat & Notifications (Socket.io)**
 - Swagger API docs at `/api-docs`
 
 ---
@@ -23,6 +24,7 @@
 - Node.js, Express
 - MongoDB (mongoose)
 - JWT (jsonwebtoken)
+- **Socket.io** for real-time features
 - Cloudinary for image hosting
 - Stripe for payments
 - Swagger for API docs
@@ -117,6 +119,7 @@ Key folders and files:
 - `server.js` — App entry point
 - `routes/` — Express route definitions
 - `models/` — Mongoose models
+- `Socket/` — Socket.io event handlers and management
 - `services/` — Business logic and services
 - `middlewares/` — Custom middleware
 - `utils/` — Utilities (validation, tokens, emails, cloudinary, etc.)
@@ -125,7 +128,8 @@ Key folders and files:
 
 ## 🧪 Tests
 
-There are no automated tests configured yet. The `npm test` script exists as a placeholder.
+- `npm test` — Placeholder for automated tests.
+- `npm run test-socket` — Script for testing Socket.io connections and events.
 
 ---
 

@@ -68,10 +68,6 @@ exports.updateUserValidator = [
     .isEmail()
     .withMessage('Invalid email address')
     ,
-  check('phone')
-    .optional()
-    .isMobilePhone(['ar-EG', 'ar-SA'])
-    .withMessage('Invalid phone number only accepted Egy and SA Phone numbers'),
 
   check('profileImg').optional(),
   check('role').optional(),
@@ -131,9 +127,6 @@ exports.updateLoggedUserValidator = [
     .withMessage('Invalid email address')
     ,
   check('phone')
-    .optional()
-    .isMobilePhone(['ar-EG', 'ar-SA'])
-    .withMessage('Invalid phone number only accepted Egy and SA Phone numbers'),
-
+    .optional(),
   validatorMiddleware,
 ];

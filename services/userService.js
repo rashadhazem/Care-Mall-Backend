@@ -58,7 +58,7 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
     {
       name: req.body.name,
       slug: req.body.slug,
-      phone: req.body.phone,
+      phone: req.body.phone || "",
       email: req.body.email,
       image: req.body.image,
       role: req.body.role,
@@ -146,8 +146,9 @@ exports.updateLoggedUserData = asyncHandler(async (req, res, next) => {
     req.user._id,
     {
       name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
+      email: req.body.email || req.user.email,
+      phone: req.body.phone || req.user.phone || "",
+      address: req.body.address || req.user.address,
     },
     { new: true }
   );

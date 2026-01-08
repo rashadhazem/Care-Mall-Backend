@@ -3,17 +3,17 @@ const morgan = require("morgan");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require('cors');
-const cookieParser = require("cookie-parser")
+const cookieParser = require("cookie-parser");
+
 const initSocketIO = require("./Socket/socket");
 const swaggerUI = require("swagger-ui-express");
 const { Server } = require("socket.io");
-
 const swaggerSpec = require("./swagger");
 
 dotenv.config({ path: 'config.env' });
 
 const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
+
 const rateLimit = require('express-rate-limit');
 const globalError = require('./middlewares/errorMiddleware');
 const ApiError = require('./utils/apiError');
@@ -23,7 +23,6 @@ const mountRoutes = require("./routes/index");
 
 const app = express();
 
-// CORS - Must be first
 app.use(cors({
     origin: process.env.ORIGIN || 'http://localhost:5173', // Allow frontend
     credentials: true,
@@ -37,12 +36,12 @@ app.use(cookieParser());
 // app.use(mongoSanitize());
 
 // Rate Limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again in an hour!'
-});
-app.use('/api', limiter);
+// const limiter = rateLimit({
+//     windowMs: 15 * 60 * 1000, // 15 minutes
+//     max: 100, // Limit each IP to 100 requests per windowMs
+//     message: 'Too many requests from this IP, please try again in an hour!'
+// });
+// app.use('/api', limiter);
 
 mountRoutes(app);
 
